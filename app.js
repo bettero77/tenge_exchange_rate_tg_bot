@@ -14,30 +14,31 @@ const server = http.createServer((req, res) => {
     res.end('Hello World!');
 });
 
-const callMir = () => https.get(mirURL, callback);
+const callMir = async (chatId) => {
+    https.get(mirURL, (k) => callback(k, chatId));
+}
 
-callback = function (response) {
-    var str = '';
-
+callback = function (response, chatId) {
+    let str = '', data, rate;
     response.on('data', function (chunk) {
         str += chunk;
     });
 
     response.on('end', function () {
-        let data = find(cheerio.load(str));
-        let rate = Number(1 / +data.value).toFixed(2);
-        bot.sendMessage(process.env.T_CHAT_ID, data.name + ' ' + rate);
+        data = find(cheerio.load(str));
+        rate = Number(1 / +data.value).toFixed(2);
+        bot.sendMessage(chatId, data.name + ' ' + rate);
     });
 }
 
 botOn = () => bot.on('message', (msg) => {
-    callMir();
+    callMir(msg.chat.id);
 });
 
 
 server.listen(process.env.PORT || 3000, () => {
     console.log(`Server running at http://127.0.0.1:${process.env.PORT || 3000}/`);
-    callMir();
+    callMir(process.env.T_CHAT_ID);
     botOn();
 });
 
